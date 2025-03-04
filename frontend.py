@@ -4,7 +4,7 @@ import tempfile
 import os
 
 # Flask server URL
-SERVER_URL = "http://127.0.0.1:5000"
+SERVER_URL = "https://security-camera.streamlit.app/"
 
 st.title("🔒 Security Camera App")
 
