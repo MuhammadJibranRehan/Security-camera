@@ -1,50 +1,42 @@
 import streamlit as st
 import requests
-import tempfile
+import cv2
+import numpy as np
+from PIL import Image
 import os
 
-# 🚀 REPLACE with your deployed backend URL
-SERVER_URL = "https://your-backend.onrender.com"
+SERVER_URL = "http://127.0.0.1:5000"
 
-st.title("🔒 Security Camera App")
+st.set_page_config(page_title="Security Camera App", layout="centered")
+st.markdown("<h1 style='text-align: center;'>🔒 Security Camera App</h1>", unsafe_allow_html=True)
 
-# Video Stream (Not implemented here)
+# Display live camera feed
 st.image(f"{SERVER_URL}/video_feed")
 
-# 🎥 Start Recording
-if st.button("Start Recording"):
-    response = requests.post(f"{SERVER_URL}/start_record")
-    if response.status_code == 200:
-        st.success("Recording Started!")
-    else:
-        st.error("Failed to start recording.")
+# Buttons for recording
+col1, col2 = st.columns(2)
+with col1:
+    if st.button("Start Recording", use_container_width=True):
+        response = requests.post(f"{SERVER_URL}/start_recording")
+        st.success(response.json()["message"])
 
-# 🛑 Stop Recording
-if st.button("Stop Recording"):
-    response = requests.post(f"{SERVER_URL}/stop_record")
-    if response.status_code == 200:
-        st.success("Recording Stopped!")
-    else:
-        st.error("Failed to stop recording.")
+with col2:
+    if st.button("Stop Recording", use_container_width=True):
+        response = requests.post(f"{SERVER_URL}/stop_recording")
+        st.success(response.json()["message"])
 
-# 📂 File Upload
-uploaded_file = st.file_uploader("Upload a video", type=["mp4", "avi", "mpeg4"])
-if uploaded_file is not None:
-    with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-        temp_file.write(uploaded_file.read())
-        temp_file_path = temp_file.name
+# File uploader for video
+st.markdown("### Upload a video")
+uploaded_file = st.file_uploader("Drag and drop file here", type=["mp4", "avi", "mpeg4"])
 
-    with open(temp_file_path, "rb") as file:
-        response = requests.post(f"{SERVER_URL}/upload", files={"file": file})
+if uploaded_file:
+    st.video(uploaded_file)
 
-    os.remove(temp_file_path)  # Clean up temp file
-
-    if response.status_code == 200:
-        st.success("File uploaded successfully!")
-    else:
-        st.error("Failed to upload file.")
-
-# 🎬 Display Last Recorded Video
+# Get last recorded video
 if st.button("Get Last Recorded Video"):
-    video_url = f"{SERVER_URL}/get_last_video"
-    st.video(video_url)
+    response = requests.get(f"{SERVER_URL}/latest_video")
+    if response.status_code == 200:
+        video_path = response.json()["latest_video"]
+        st.video(video_path)
+    else:
+        st.warning("No recorded video found.")
